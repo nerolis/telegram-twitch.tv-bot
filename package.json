@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jquery": "^3.2.1",
+    "superagent": "^3.6.0",
     "tmi.js": "^1.2.1"
   }
 }
