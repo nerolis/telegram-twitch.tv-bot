@@ -12,6 +12,8 @@
     "jQuery": "^1.7.4",
     "jquery": "^3.2.1",
     "jsdom": "^11.3.0",
+    "mongodb": "^2.2.33",
+    "mongoose": "^4.12.3",
     "superagent": "^3.6.0",
     "tmi.js": "^1.2.1"
   }

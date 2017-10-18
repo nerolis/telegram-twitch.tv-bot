@@ -1,9 +1,10 @@
-var tmi = require('tmi.js');
+const tmi = require('tmi.js');
 const jsdom = require("jsdom");
+const mongodb = require('mongodb')
 const { JSDOM } = jsdom;
 const { window } = new JSDOM(`<!DOCTYPE html>`);
 const $ = require('jQuery')(window);
-
+const fs = require('fs');
 // Options. 
 var options = {
     options:
@@ -34,6 +35,14 @@ client.on('connected', function(address, port) {
     }, 60000); // Каждую минуту.
 });                                                                                                 
 
+
+lastBroadcast = () => {
+fs.writeFile('lastBroadcast.txt', new Date().toLocaleString(), function (err) {
+    if (err) 
+        return console.log(err);
+});
+
+}
 CheckOnlineStatus = () => {
     $.ajax({
         url: `https://api.twitch.tv/kraken/streams/annieflowers`,
@@ -44,8 +53,16 @@ CheckOnlineStatus = () => {
         success: function (channel) {
             if (channel["stream"] == null) {
                 console.log('Offline. After 60 sec, another parse.')
+                fs.readFile('lastBroadcast.txt', 'utf8', function (err,data) {
+                if (err) {
+                    return console.log(err);
+                }
+                    client.action('annieflowers', `last seen ${data}`);
+                });
+
             } else {
-                client.action('annieflowers', ` @annieflowers online, clear timeout`);
+                client.action('annieflowers', ` @annieflowers online, clear timeout.`);
+                lastBroadcast()
                 clearTimeout(intervalTimer);
             }
         }
