@@ -4,25 +4,27 @@ import Telegraf                                     from 'telegraf';
 import SocksProxyAgent                              from 'socks-proxy-agent';
 
 const commandArgsMiddleware = require('./middleware');
-const telegram   = new Telegraf(token, { telegram: { agent: new SocksProxyAgent('socks://88.198.202.64:1080') }});
-const twitch     = new tmi.client(options);
 
-telegram.use(commandArgsMiddleware());
-telegram.startPolling();
+const Telegram   = new Telegraf(token, { telegram: { agent: new SocksProxyAgent('socks://88.198.202.64:1080') } });
+const Twitch     = new tmi.client(options);
+
+Telegram.use(commandArgsMiddleware());
+Telegram.startPolling();
+
 let subscribers = {};
-let init = {};
 
 initTelegramCommands();
 
 function initTelegramCommands() {    
-    telegram.start((ctx) => ctx.reply('Бот для twitch.tv, помогает отслеживать сообщения. /join $channelname для того, чтоб начать пользоваться ботом.'));
+    Telegram.start(ctx => ctx.reply('Бот, который помогает отслеживать сообщения с twitch.tv. /join $channelname для того, чтоб начать пользоваться ботом.'));
 
-    telegram.command('join', ctx => {
+    Telegram.command('join', ctx => {
         const channelName = ctx.contextState.command.args;
-        initTwitch(ctx, channelName);
+
+        joinTwitch(ctx, channelName);
     });
 
-    telegram.command('subscribe', ctx => {
+    Telegram.command('subscribe', ctx => {
         if (!subscribers.channels) {
             subscribeOnChannel(ctx);
         } else {
@@ -30,12 +32,17 @@ function initTelegramCommands() {
         }
     });
 
-    telegram.command('stalk', ctx => {
+    Telegram.command('stalk', ctx => {
         const nickname = ctx.contextState.command.args;
-        subscribeOnTarget(ctx, nickname);
+
+        if (!subscribers.nickname) {
+            subscribeOnTarget(ctx, nickname);
+        } else {
+            ctx.reply(`Already stalk for ${nickname} channel`);
+        }
     });
 
-    telegram.command('commands', ctx => {
+    Telegram.command('commands', ctx => {
         getCommandList(ctx);
     });
 };
@@ -47,9 +54,10 @@ const getCommandList = ctx => {
 
 const subscribeOnTarget  = (ctx, nickname) => {
     subscribers.nickname = true;
+
     ctx.reply(`Subscribed on ${nickname} messages`);
 
-    twitch.on("chat", (channel, userstate, message, self, user) => {
+    Twitch.on("chat", (channel, userstate, message, self, user) => {
         if (userstate['display-name'].toLowerCase() == nickname) {
             ctx.reply(`${userstate['display-name']} : ${message}`);
         }
@@ -60,19 +68,19 @@ const subscribeOnChannel  = ctx => {
     subscribers.channels  = true;
     ctx.reply(`Subscribed on ${options.channels} channel`);
     
-    twitch.on("chat", (channel, userstate, message, self, user) => {
+    Twitch.on("chat", (channel, userstate, message, self, user) => {
         ctx.reply(`${userstate['display-name']} : ${message}`);
     });
 };
 
-const initTwitch = (ctx, channel) => {
-    options.channels.push(channel);
+const joinTwitch = (ctx, channelName) => {
+    options.channels.push(channelName);
 
-    ctx.reply(`${options.channels} added to listen. /commands for commands`);
+    ctx.reply(`now listen to ${options.channels}. /commands`);
 
     if (options.channels.length < 1) {
         ctx.reply(`Channel list is empty`);
     } else {
-        twitch.connect();
+        Twitch.connect();
     }
 }
