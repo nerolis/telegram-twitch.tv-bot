@@ -4,4 +4,4 @@ build
 .module-cache
 *.log*
 _nogit
-conf.js
+utils.js

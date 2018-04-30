@@ -1,4 +1,4 @@
-import { options, proxy, token }                    from './conf.js';
+import { options, token }                           from './conf.js';
 import tmi                                          from 'tmi.js';
 import Telegraf                                     from 'telegraf';
 import SocksProxyAgent                              from 'socks-proxy-agent';
