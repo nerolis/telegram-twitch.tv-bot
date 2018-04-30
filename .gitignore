@@ -5,3 +5,4 @@ build
 *.log*
 _nogit
 utils.js
+package-lock.json
