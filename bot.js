@@ -12,17 +12,7 @@ telegram.startPolling();
 let subscribers = {};
 let init = {};
 
-telegram.telegram.getMe().then(() => {
-    init.twitch = true;
-    console.log(`Telegram = true`);
-});
-
-if (!init.telegram && init.twitch) {
-    throw new Error('Something wrong with connect');
-} else {
-    initTelegramCommands();
-};
-
+initTelegramCommands();
 
 function initTelegramCommands() {    
     telegram.start((ctx) => ctx.reply('Бот для twitch.tv, помогает отслеживать сообщения. /join $channelname для того, чтоб начать пользоваться ботом.'));
@@ -60,7 +50,7 @@ const subscribeOnTarget  = (ctx, nickname) => {
     ctx.reply(`Subscribed on ${nickname} messages`);
 
     twitch.on("chat", (channel, userstate, message, self, user) => {
-        if (checkChannelName(userstate, nickname)) {
+        if (userstate['display-name'].toLowerCase() == nickname) {
             ctx.reply(`${userstate['display-name']} : ${message}`);
         }
     });
@@ -73,13 +63,6 @@ const subscribeOnChannel  = ctx => {
     twitch.on("chat", (channel, userstate, message, self, user) => {
         ctx.reply(`${userstate['display-name']} : ${message}`);
     });
-};
-
-const checkChannelName = (userstate, nickname) => {
-    if (userstate['display-name'] !== nickname)
-        return false
-
-    return true;
 };
 
 const initTwitch = (ctx, channel) => {
