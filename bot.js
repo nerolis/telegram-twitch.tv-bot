@@ -15,8 +15,11 @@ let subscribers = {};
 
 initTelegramCommands();
 
-function initTelegramCommands() {    
+function initTelegramCommands() {
+        
     Telegram.start(ctx => ctx.reply('Бот, который помогает отслеживать сообщения с twitch.tv. /join $channelname для того, чтоб начать пользоваться ботом.'));
+ 
+    Telegram.command('commands', ctx => getCommandList(ctx));
 
     Telegram.command('join', ctx => {
         const channelName = ctx.contextState.command.args;
@@ -40,10 +43,6 @@ function initTelegramCommands() {
         } else {
             ctx.reply(`Already stalk for ${nickname} channel`);
         }
-    });
-
-    Telegram.command('commands', ctx => {
-        getCommandList(ctx);
     });
 };
 
@@ -84,3 +83,13 @@ const joinTwitch = (ctx, channelName) => {
         Twitch.connect();
     }
 }
+
+Twitch.on("chat", (channel, userstate, message, self, user) => {
+    if (message.split(' ')[0] === '!ask') {
+        if (Math.random() >= 0.5) {
+            Twitch.action(channel, userstate['display-name'] + ', Да.');
+        } else {
+            Twitch.action(channel, userstate['display-name'] + ', Нет.');
+        }
+    }
+});
