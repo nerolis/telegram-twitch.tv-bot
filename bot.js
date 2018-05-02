@@ -10,10 +10,10 @@ const Twitch     = new tmi.client(options);
 Telegram.use(commandArgsMiddleware());
 Telegram.startPolling();
 
+let subscribers = {};
+
 initTelegramCommands();
 initTwitchListeners();
-
-let subscribers = {};
 
 function initTelegramCommands() {
     Telegram.start(ctx =>
@@ -23,11 +23,11 @@ function initTelegramCommands() {
          ctx.reply(`/subscribe - listen to all msges in joined channel. /stalk $channelname listen to msgs by specific user in joined channel`));
 
     Telegram.command('join', ctx => 
-        joinTwitch(ctx));
+        Handler.joinCTwitchChannel(ctx));
 
     Telegram.command('subscribe', ctx => {
         if (!subscribers.channels) {
-            listenJoinedChannel(ctx);
+            Handler.listenJoinedChannel(ctx);
         } else {
             ctx.reply(`Already listen to ${options.channels} channel`);
         }
@@ -35,7 +35,7 @@ function initTelegramCommands() {
 
     Telegram.command('stalk', ctx => {
         if (!subscribers.nickname) {
-            listenToSpecificUser(ctx);
+            Handler.listenToSpecificUser(ctx);
         } else {
             ctx.reply(`Already stalk for ${nickname} channel`);
         }
@@ -54,37 +54,41 @@ function initTwitchListeners() {
     });
 };
 
-const listenToSpecificUser  = ctx => {
-    const nickname = ctx.contextState.command.args;
-    subscribers.nickname = true;
+class CommandHandler {
+    joinCTwitchChannel(ctx) {
+        const channelName = ctx.contextState.command.args;
+        options.channels.push(channelName);
 
-    ctx.reply(`Subscribed on ${nickname} messages`);
+        ctx.reply(`Now listen to ${options.channels}. /commands`);
 
-    Twitch.on("chat", (channel, userstate, message, self, user) => {
-        if (userstate['display-name'].toLowerCase() == nickname) {
-            ctx.reply(`${userstate['display-name']} : ${message}`);
+        if (options.channels.length < 1) {
+            ctx.reply(`Channel list is empty`);
+        } else {
+            Twitch.connect();
         }
-    });
-};
+    };
 
-const listenJoinedChannel  = ctx => {
-    subscribers.channels  = true;
-    ctx.reply(`Now listen to ${options.channels} channel`);
-    
-    Twitch.on("chat", (channel, userstate, message, self, user) => {
-        ctx.reply(`${userstate['display-name']} : ${message}`);
-    });
-};
+    listenToSpecificUser(ctx) {
+        const nickname = ctx.contextState.command.args;
+        subscribers.nickname = true;
 
-const joinTwitch = ctx => {
-    const channelName = ctx.contextState.command.args;
-    options.channels.push(channelName);
+        ctx.reply(`Subscribed on ${nickname} messages`);
 
-    ctx.reply(`Now listen to ${options.channels}. /commands`);
+        Twitch.on("chat", (channel, userstate, message, self, user) => {
+            if (userstate['display-name'].toLowerCase() == nickname) {
+                ctx.reply(`${userstate['display-name']} : ${message}`);
+            }
+        });
+    };
 
-    if (options.channels.length < 1) {
-        ctx.reply(`Channel list is empty`);
-    } else {
-        Twitch.connect();
-    }
-};
+    listenJoinedChannel(ctx) {
+        subscribers.channels = true;
+        ctx.reply(`Now listen to ${options.channels} channel`);
+
+        Twitch.on("chat", (channel, userstate, message, self, user) => {
+            ctx.reply(`${userstate['display-name']} : ${message}`);
+        });
+    };
+}
+
+const Handler = new CommandHandler();
